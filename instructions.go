@@ -1,4 +1,4 @@
-package main
+package brainfuck
 
 type InstructionType string
 
