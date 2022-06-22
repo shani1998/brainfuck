@@ -7,6 +7,42 @@ import (
 	"testing"
 )
 
+func TestBrainfuck_Run(t *testing.T) {
+	tests := []struct {
+		name   string
+		code   string
+		output string
+	}{
+		{
+			name:   "pass abcd instruction",
+			code:   "----[---->+<]>++.+.+.+.",
+			output: "ABCD",
+		},
+		{
+			name:   "pass hello world instruction",
+			code:   "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.",
+			output: "Hello World!\n",
+		},
+		{
+			name:   "empty output, pass only braces",
+			code:   "[[[][[[]]]]]",
+			output: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			codeReader := strings.NewReader(tt.code)
+			i := new(bytes.Buffer)
+			o := new(bytes.Buffer)
+			bfm := NewInterpreter(i, o)
+			_ = bfm.Run(codeReader)
+			if o.String() != tt.output {
+				t.Errorf("wrong output, got %s", o.String())
+			}
+		})
+	}
+}
+
 func TestBrainfuck_Decrement(t *testing.T) {
 	testBrainFuck := NewInterpreter(os.Stdin, os.Stdout)
 	tests := []struct {
@@ -174,37 +210,6 @@ func TestBrainfuck_CloseLoop(t *testing.T) {
 			testBrainFuck.CloseLoop()
 			if tt.want != len(testBrainFuck.loopStack) {
 				t.Errorf("MoveRight(): expected %v, got %v", tt.want, len(testBrainFuck.loopStack))
-			}
-		})
-	}
-}
-
-func TestBrainfuck_Run(t *testing.T) {
-	tests := []struct {
-		name   string
-		code   string
-		output string
-	}{
-		{
-			name:   "",
-			code:   "----[---->+<]>++.+.+.+.",
-			output: "ABCD",
-		},
-		{
-			name:   "",
-			code:   "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.",
-			output: "Hello World!\n",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			codeReader := strings.NewReader(tt.code)
-			i := new(bytes.Buffer)
-			o := new(bytes.Buffer)
-			bfm := NewInterpreter(i, o)
-			_ = bfm.Run(codeReader)
-			if o.String() != tt.output {
-				t.Errorf("wrong output, got %s", o.String())
 			}
 		})
 	}

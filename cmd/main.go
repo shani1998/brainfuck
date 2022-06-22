@@ -27,5 +27,4 @@ func main() {
 	if err != nil {
 		log.Fatalf("error while execting instructions . %v", err)
 	}
-	// go run main.go -code="----[---->+<]>++.+.+.+."
 }
