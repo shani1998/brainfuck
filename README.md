@@ -42,7 +42,7 @@ $ make test
 ```
 To run cli that uses brainfuck library
 ```sh
-$ make run-cli -code="<instructions code>"
+$ make run-cli
 ```
 
 #### 
