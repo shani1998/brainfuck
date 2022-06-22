@@ -2,364 +2,209 @@ package brainfuck
 
 import (
 	"bytes"
-	"github.com/shani1998/data-structures/stack"
-	"io"
-	"reflect"
+	"os"
+	"strings"
 	"testing"
 )
 
-func TestBrainfuck_CloseLoop(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
-			}
-			bf.CloseLoop()
-		})
-	}
-}
-
 func TestBrainfuck_Decrement(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
+	testBrainFuck := NewInterpreter(os.Stdin, os.Stdout)
 	tests := []struct {
-		name   string
-		fields fields
+		name string
+		want byte
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Decrement m/m byte having value zero",
+			want: 255, // decrement from zero should go to max of uint8
+		},
+		{
+			name: "Decrement m/m byte having value non zero",
+			want: 254, // it was set to 255 in previous test
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
+			testBrainFuck.Decrement()
+			if tt.want != testBrainFuck.instrMemory[testBrainFuck.dataPointer] {
+				t.Errorf("Decrement(): expected %v, got %v", tt.want, testBrainFuck.instrMemory[testBrainFuck.dataPointer])
 			}
-			bf.Decrement()
 		})
 	}
 }
 
 func TestBrainfuck_Increment(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
+	testBrainFuck := NewInterpreter(os.Stdin, os.Stdout)
 	tests := []struct {
-		name   string
-		fields fields
+		name string
+		want byte
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Increment m/m byte having value zero",
+			want: 1, // default set to zero
+		},
+		{
+			name: "Increment m/m byte having value non zero",
+			want: 2, // it was set to 1 in previous test
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
+			testBrainFuck.Increment()
+			if tt.want != testBrainFuck.instrMemory[testBrainFuck.dataPointer] {
+				t.Errorf("Increment(): expected %v, got %v", tt.want, testBrainFuck.instrMemory[testBrainFuck.dataPointer])
 			}
-			bf.Increment()
 		})
 	}
 }
 
 func TestBrainfuck_MoveLeft(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
+	testBrainFuck := NewInterpreter(os.Stdin, os.Stdout)
 	tests := []struct {
-		name   string
-		fields fields
+		name string
+		want byte
 	}{
-		// TODO: Add test cases.
+		{
+			name: "MoveLeft data pointer having value zero",
+			want: size - 1,
+		},
+		{
+			name: "MoveLeft data pointer having value non zero",
+			want: size - 2, // it was set to size-1 in previous test
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
+			testBrainFuck.MoveLeft()
+			if tt.want != testBrainFuck.dataPointer {
+				t.Errorf("MoveLeft(): expected %v, got %v", tt.want, testBrainFuck.dataPointer)
 			}
-			bf.MoveLeft()
 		})
 	}
 }
 
 func TestBrainfuck_MoveRight(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
+	testBrainFuck := NewInterpreter(os.Stdin, os.Stdout)
 	tests := []struct {
-		name   string
-		fields fields
+		name string
+		want byte
 	}{
-		// TODO: Add test cases.
+		{
+			name: "MoveRight data pointer having value zero",
+			want: 1,
+		},
+		{
+			name: "MoveRight data pointer having value non zero",
+			want: 2, //it was set to 1 in previous test
+		},
+		{
+			name: "MoveRight data pointer having value max of uint8",
+			want: 0, //it was set to 1 in previous test
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
+			if strings.Contains(tt.name, "max of uint8") {
+				testBrainFuck.dataPointer = size - 1
 			}
-			bf.MoveRight()
+			testBrainFuck.MoveRight()
+			if tt.want != testBrainFuck.dataPointer {
+				t.Errorf("MoveRight(): expected %v, got %v", tt.want, testBrainFuck.dataPointer)
+			}
 		})
 	}
 }
 
 func TestBrainfuck_OpenLoop(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
+	testBrainFuck := NewInterpreter(os.Stdin, os.Stdout)
 	tests := []struct {
-		name   string
-		fields fields
+		name string
+		code string
+		want uint8
 	}{
-		// TODO: Add test cases.
+		{
+			name: "invalid code, Instruction pointer reaches at the end of the Code",
+			code: "random code",
+			want: uint8(len("random code")), // pointer should reach at end
+		},
+		{
+			name: "Set a valid code",
+			code: "[>++.<-]>+",
+			want: uint8(len("++[>++.<-]>+")),
+		},
 	}
-	for _, tt := range tests {
+	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
+			testBrainFuck.Code = tt.code
+			if strings.Contains(tt.name, "non zero") {
+				testBrainFuck.instrMemory[testBrainFuck.dataPointer]++
 			}
-			bf.OpenLoop()
+			testBrainFuck.OpenLoop()
+			if i+1 != len(testBrainFuck.loopStack) {
+				t.Errorf("mismatched coount for total open braces")
+			}
+			if tt.want != testBrainFuck.instrPointer {
+				t.Errorf("MoveRight(): expected %v, got %v", tt.want, testBrainFuck.instrPointer)
+			}
 		})
 	}
 }
 
-func TestBrainfuck_Read(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
+func TestBrainfuck_CloseLoop(t *testing.T) {
+	testBrainFuck := NewInterpreter(os.Stdin, os.Stdout)
 	tests := []struct {
-		name   string
-		fields fields
+		name string
+		code string
+		want int
 	}{
-		// TODO: Add test cases.
+		{
+			name: "loop stack having length zero",
+			want: 0, // initially loopStack will be empty, so pop will error
+		},
+		{
+			name: "set loop stack with zero m/m byte",
+			want: 0, // after pop loop stack length should be empty
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
+			testBrainFuck.Code = tt.code
+			if strings.Contains(tt.name, "set loop") {
+				testBrainFuck.loopStack.Push(1)
 			}
-			bf.Read()
+			testBrainFuck.CloseLoop()
+			if tt.want != len(testBrainFuck.loopStack) {
+				t.Errorf("MoveRight(): expected %v, got %v", tt.want, len(testBrainFuck.loopStack))
+			}
 		})
 	}
 }
 
 func TestBrainfuck_Run(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
-	type args struct {
-		codeReader io.Reader
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
-			}
-			if err := bf.Run(tt.args.codeReader); (err != nil) != tt.wantErr {
-				t.Errorf("Run() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestBrainfuck_Write(t *testing.T) {
-	type fields struct {
-		code                string
-		InstrMemory         [size]byte
-		InstrPointer        uint8
-		DataPointer         uint8
-		LoopStack           stack.Stack
-		Output              io.Writer
-		Input               io.Reader
-		buffer              []byte
-		CmdOperationMapping map[InstructionType]func(*Brainfuck)
-	}
 	tests := []struct {
 		name   string
-		fields fields
+		code   string
+		output string
 	}{
-		// TODO: Add test cases.
+		{
+			name:   "",
+			code:   "----[---->+<]>++.+.+.+.",
+			output: "ABCD",
+		},
+		{
+			name:   "",
+			code:   "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.",
+			output: "Hello World!\n",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bf := &Brainfuck{
-				code:                tt.fields.code,
-				InstrMemory:         tt.fields.InstrMemory,
-				InstrPointer:        tt.fields.InstrPointer,
-				DataPointer:         tt.fields.DataPointer,
-				LoopStack:           tt.fields.LoopStack,
-				Output:              tt.fields.Output,
-				Input:               tt.fields.Input,
-				buffer:              tt.fields.buffer,
-				CmdOperationMapping: tt.fields.CmdOperationMapping,
-			}
-			bf.Write()
-		})
-	}
-}
-
-func TestNewBrainFuck(t *testing.T) {
-	type args struct {
-		i io.Reader
-	}
-	tests := []struct {
-		name  string
-		args  args
-		wantW string
-		want  *Brainfuck
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			w := &bytes.Buffer{}
-			got := NewBrainFuck(tt.args.i, w)
-			if gotW := w.String(); gotW != tt.wantW {
-				t.Errorf("NewBrainFuck() gotW = %v, want %v", gotW, tt.wantW)
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewBrainFuck() = %v, want %v", got, tt.want)
+			codeReader := strings.NewReader(tt.code)
+			i := new(bytes.Buffer)
+			o := new(bytes.Buffer)
+			bfm := NewInterpreter(i, o)
+			_ = bfm.Run(codeReader)
+			if o.String() != tt.output {
+				t.Errorf("wrong output, got %s", o.String())
 			}
 		})
 	}

@@ -2,7 +2,6 @@ package brainfuck
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"math"
@@ -15,16 +14,16 @@ const size = math.MaxUint8
 
 // Brainfuck used to implement the brainfuck algorithm
 type Brainfuck struct {
-	// the code to be executed
-	code string
-	// the tape code executes on
-	InstrMemory [size]byte
+	// the Code to be executed
+	Code string
+	// the tape Code executes on
+	instrMemory [size]byte
 	// the position of the instruction pointer
-	InstrPointer uint8
+	instrPointer uint8
 	// the position of the data pointer
-	DataPointer uint8
-	// the stack used to store the positions of [ in code
-	LoopStack stack.Stack
+	dataPointer uint8
+	// the stack used to store the positions of [ in Code
+	loopStack stack.Stack
 	// the output interface to write on
 	Output io.Writer
 	// the input interface to read from
@@ -35,18 +34,18 @@ type Brainfuck struct {
 	CmdOperationMapping map[InstructionType]func(*Brainfuck)
 }
 
-// NewBrainFuck initializes a brainfuck interpreter with given reader and a writer interface
+// NewInterpreter initializes a brainfuck interpreter with given reader and a writer interface
 // and default operator handler, CmdOperationMapping could be modified by using Add/Remove Instruction
-func NewBrainFuck(i io.Reader, w io.Writer) *Brainfuck {
+func NewInterpreter(i io.Reader, w io.Writer) *Brainfuck {
 	return &Brainfuck{
-		code:                "",
-		InstrMemory:         [size]byte{},
-		InstrPointer:        0,
-		DataPointer:         0,
-		LoopStack:           stack.Stack{},
+		Code:                "",
+		instrMemory:         [size]byte{},
+		instrPointer:        0,
+		dataPointer:         0,
+		loopStack:           stack.Stack{},
+		buffer:              make([]byte, 1),
 		Output:              w,
 		Input:               i,
-		buffer:              make([]byte, 1),
 		CmdOperationMapping: DefaultOperationHandlers,
 	}
 }
@@ -55,11 +54,11 @@ func NewBrainFuck(i io.Reader, w io.Writer) *Brainfuck {
 // left by one cell, wrapping to the end of the tape if necessary
 func (bf *Brainfuck) MoveLeft() {
 	//If the pointer reaches zero
-	if bf.DataPointer == 0 {
+	if bf.dataPointer == 0 {
 		//pointer is returned to rightmost memory position
-		bf.DataPointer = size - 1
+		bf.dataPointer = size - 1
 	} else {
-		bf.DataPointer--
+		bf.dataPointer--
 	}
 }
 
@@ -67,61 +66,76 @@ func (bf *Brainfuck) MoveLeft() {
 // right by one cell, wrapping to 0 if necessary
 func (bf *Brainfuck) MoveRight() {
 	//If memory is full
-	if bf.DataPointer == size-1 {
+	if bf.dataPointer == size-1 {
 		//pointer is returned to zero
-		bf.DataPointer = 0
+		bf.dataPointer = 0
 	} else {
-		bf.DataPointer++
+		bf.dataPointer++
 	}
 }
 
 // Increment represents the Brainfuck instruction "+". It increments the memory
 // cell under the pointer
 func (bf *Brainfuck) Increment() {
-	bf.InstrMemory[bf.DataPointer]++
+	bf.instrMemory[bf.dataPointer]++
 }
 
 // Decrement represents the Brainfuck instruction "-". It decrements the memory
 // cell under the pointer
 func (bf *Brainfuck) Decrement() {
-	bf.InstrMemory[bf.DataPointer]--
+	bf.instrMemory[bf.dataPointer]--
 }
 
 // Output represents the Brainfuck instruction ".". It prints the character
 // value of the cell under the pointer
 func (bf *Brainfuck) Write() {
-	_, err := fmt.Fprint(bf.Output, bf.InstrMemory[bf.DataPointer])
+	bf.buffer[0] = bf.instrMemory[bf.dataPointer]
+	n, err := bf.Output.Write(bf.buffer)
 	if err != nil {
 		log.Printf("error while writing data to Output: %v", err)
-		return
+	}
+	if n != 1 {
+		log.Print("wrong num bytes written")
 	}
 }
 
 // Input represents the Brainfuck instruction ",". It takes a character from
 // input and stores it in the cell under the pointer
 func (bf *Brainfuck) Read() {
-	_, err := fmt.Fscan(bf.Input, &bf.InstrMemory[bf.DataPointer])
+	n, err := bf.Input.Read(bf.buffer)
 	if err != nil {
 		log.Printf("error while reading data from input: %s", err)
-		return
 	}
+	if n != 1 {
+		log.Printf("wrong num bytes read")
+	}
+
+	bf.instrMemory[bf.dataPointer] = bf.buffer[0]
 }
 
 // OpenLoop represents the Brainfuck instruction "[". It forms the opening
-// part of a loop. If the cell under the pointer is 0, returns true to
-// indicate to jump to the next ]
+// part of a loop. If the cell under the pointer is 0, indicate to jump to the next ]
 func (bf *Brainfuck) OpenLoop() {
-	bf.LoopStack.Push(bf.InstrPointer)
-
+	bf.loopStack.Push(bf.instrPointer)
+	// return if the memory byte at data pointer is non-zero
+	if bf.instrMemory[bf.dataPointer] != 0 {
+		return
+	}
 	var jumpStack stack.Stack
-	jumpStack.Push(1)
-	for !jumpStack.IsEmpty() || bf.InstrMemory[bf.DataPointer] == 0 { // jump to the next ']'
-		fmt.Printf(" in OpenLoop index: %d, char: %c, bf.dp:%+v, m/m:%v jumpStack %v,loopStack %v\n",
-			bf.InstrPointer, bf.code[bf.InstrPointer], bf.DataPointer, bf.InstrMemory[bf.DataPointer], jumpStack, bf.LoopStack)
-		bf.InstrPointer += 1
-		if string(bf.code[bf.InstrPointer]) == "[" {
+	jumpStack.Push(1)          // push one from '[' braces
+	for !jumpStack.IsEmpty() { // jump to the next ']'
+		bf.instrPointer++
+		// to avoid not getting closing bracket in the range
+		if bf.instrPointer >= uint8(len(bf.Code)) {
+			log.Printf("unable to read the Code, please set valid code")
+			return
+		}
+		// push into stack for every opening bracket
+		if string(bf.Code[bf.instrPointer]) == "[" {
 			jumpStack.Push(1)
-		} else if string(bf.code[bf.InstrPointer]) == "]" {
+		}
+		// pop from stack for every closing bracket
+		if string(bf.Code[bf.instrPointer]) == "]" {
 			jumpStack.Pop()
 		}
 	}
@@ -129,34 +143,33 @@ func (bf *Brainfuck) OpenLoop() {
 
 // CloseLoop represents the Brainfuck instruction "]".
 // It closes a loop and returns the index of the matching open brace in the
-// code, if the cell under the pointer is not 0. Otherwise returns -1
+// Code, if the cell under the pointer is not 0.
 func (bf *Brainfuck) CloseLoop() {
-	p, err := bf.LoopStack.Pop()
+	p, err := bf.loopStack.Pop()
 	if err != nil {
-		panic(err)
+		log.Printf("error occured while poping data from stack: %v", err)
+		return
 	}
-	if bf.InstrMemory[bf.DataPointer] != 0 {
-		bf.InstrPointer = p.(uint8) - 1
+	if bf.instrMemory[bf.dataPointer] != 0 {
+		bf.instrPointer = p.(uint8) - 1
 	}
 }
 
 // Run runs the given Brainfuck program with given instructions.
-func (bf *Brainfuck) Run(codeReader io.Reader) error {
+func (bf *Brainfuck) Run(CodeReader io.Reader) error {
 	buf := new(bytes.Buffer)
-	_, err := buf.ReadFrom(codeReader)
+	_, err := buf.ReadFrom(CodeReader)
 	if err != nil {
 		return err
 	}
-	bf.code = buf.String()
+	bf.Code = buf.String()
 
 	// traverse over each instruction
-	for i, cmd := range bf.code {
-		bf.InstrPointer = uint8(i)
-		if oprHandler, ok := bf.CmdOperationMapping[InstructionType(cmd)]; ok {
-			fmt.Printf("in Run index: %d, char: %c, bf.dp:%+v, m/m:%v loopStack %v\n",
-				bf.InstrPointer, bf.code[bf.InstrPointer], bf.DataPointer, bf.InstrMemory[bf.DataPointer], bf.LoopStack)
+	for bf.instrPointer < uint8(len(bf.Code)) {
+		if oprHandler, ok := bf.CmdOperationMapping[InstructionType(bf.Code[bf.instrPointer])]; ok {
 			oprHandler(bf)
 		}
+		bf.instrPointer++
 	}
 	return nil
 }

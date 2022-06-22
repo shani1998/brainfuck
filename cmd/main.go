@@ -1,24 +1,31 @@
 package main
 
 import (
-	"bytes"
+	"flag"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 
 	"github.com/shani1998/brainfuck"
 )
 
-func main() {
-	Program := strings.NewReader("++[>++.<-]>+.,>>.") //
-	// Standards interface to io
-	input := new(bytes.Buffer)
-	output := new(bytes.Buffer)
+var (
+	defaultCode = ",[.,]"
+)
 
-	brainfuck := brainfuck.NewBrainFuck(input, output)
-	fmt.Println(Program)
-	err := brainfuck.Run(Program)
+func init() {
+	flag.StringVar(&defaultCode, "code", defaultCode, "Instruction to be executed by brainfuck interpreter")
+}
+
+func main() {
+	flag.Parse()
+	fmt.Println(defaultCode)
+	code := strings.NewReader(defaultCode)
+	bf := brainfuck.NewInterpreter(os.Stdin, os.Stdout)
+	err := bf.Run(code)
 	if err != nil {
-		fmt.Printf("File %s does not contain a valid Brainfuck program:\n", err)
-		return
+		log.Fatalf("error while execting instructions . %v", err)
 	}
+	// go run main.go -code="----[---->+<]>++.+.+.+."
 }

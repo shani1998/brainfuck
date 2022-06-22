@@ -26,7 +26,7 @@ var DefaultOperationHandlers = map[InstructionType]func(*Brainfuck){
 	output:    (*Brainfuck).Write,
 }
 
-// AddInstruction adds given instruction and operation to be perform into the brainfuck program.
+// AddInstruction adds given instruction and operation to be performed into the brainfuck program.
 func (bf *Brainfuck) AddInstruction(command InstructionType, handler func(*Brainfuck)) {
 	bf.CmdOperationMapping[command] = handler
 }
